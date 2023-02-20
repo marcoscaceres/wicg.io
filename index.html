@@ -26,10 +26,6 @@
     <main role="main">
       <section id="join">
         <h2 class="visuallyhidden">Join our community!</h2>
-        <p>
-          Join our community of developers and browser makers to define the next
-          generation of web technologies.
-        </p>
         <ul class="buttonlist fancypill">
           <li>
             <a href="https://github.com/WICG/">GitHub</a>
@@ -41,25 +37,42 @@
             <a href="https://discourse.wicg.io/">Discourse</a>
           </li>
         </ul>
+        <p>
+          Join our community of developers and browser makers to define the next
+          generation of web technologies.
+        </p>
+      </section>
+      <section class="accelerated collapsable">
+        <h2 class="opener">About the WICG</h2>
+        <p class="about">
+          The Web Incubator Community Group (WICG) is a community group of the
+          <a href="https://www.w3.org/">World Wide Web Consortium (W3C)</a> that
+          incubates new web platform features. The WICG is a place for
+          experimentation and discussion of new web platform features. The WICG
+          is not a standards body, but rather a forum for discussion and
+          incubation of new ideas and the could one day become web standards.
+        </p>
       </section>
       <section id="publications" class="collapsable accelerated">
-        <h2 class="opener">Getting started</h2>
-        <pre class="bash">
-npm install -g wicg
-wicg init "The Awesome API"</pre
-        >
+        <h2 class="opener">Making a proposal</h2>
+        <p>
+          If you are interested in contributing a proposal to the WICG, please
+          see our
+          <a href="https://github.com/WICG/proposals">proposals repository</a>
+          on GitHub.
+        </p>
       </section>
       <section id="publications" class="collapsable accelerated">
         <h2 class="opener">
-          Incubations <span class="incubation-count"></span>
+          Active Incubations (<span class="incubation-count"></span>)
         </h2>
-        <ul class="docslist multicol" id="incubation-list"></ul>
+        <dl class="docslist multicol" id="incubation-list"></dl>
       </section>
       <section id="links" class="collapsable accelerated">
         <h2 class="opener">Useful Resources</h2>
-        <ul class="linkslist multicol">
+        <ul class="linkslist">
           <li>
-            <a href="https://wicg.github.io/admin/charter.html"> Charter </a>
+            <a href="https://wicg.github.io/admin/charter.html">Charter</a>
           </li>
           <li>
             <a href="https://www.w3.org/community/wicg/participants">
@@ -67,7 +80,7 @@ wicg init "The Awesome API"</pre
             </a>
           </li>
           <li>
-            <a href="https://www.w3.org/community/wicg/"> Join </a>
+            <a href="https://www.w3.org/community/wicg/">Join</a>
           </li>
           <li>
             <a href="https://lists.w3.org/Archives/Public/public-wicg/">
@@ -142,35 +155,86 @@ wicg init "The Awesome API"</pre
         );
         incubationList`${{
           placeholder: "Loading specs...",
-          any: jsonPromise.then(specs => specs.map(toListItem)),
+          any: jsonPromise.then((specs) => specs.map(toListItem)),
         }}`;
         incubationCount`${{
           placeholder: "",
-          any: jsonPromise.then(specs => `(${specs.length})`),
+          any: jsonPromise.then((specs) => `${specs.length}`),
         }}`;
       }
 
-      function byKey([keyA], [keyB]) {
-        return keyA.toLowerCase().localeCompare(keyB.toLowerCase());
+      function toListItem(entry) {
+        const { name, repo, spec, stars } = entry;
+        /** @type {string} */
+        let description = entry.description?.trim() ?? null;
+        if (
+          // If description does not end with a period or question mark, don't add one.
+          description &&
+          !description.endsWith(".") &&
+          !description.endsWith("?")
+        ) {
+          description += ".";
+        }
+        const href = spec || repo;
+        // Incubation time in years and months
+        const incubationYearsAndMonths = getYearsAndMonths(entry.created_at);
+        // Date suitable for the datetime attribute
+        const createdDateTime = new Date(entry.created_at).toISOString();
+        // Update date suitable for the datetime attribute
+        const updatedDateTime = new Date(entry.updated_at).toISOString();
+        // Pretty date only showing the month and year
+        const prettyUpdateDate = new Date(entry.updated_at).toLocaleDateString(
+          "en-US",
+          { month: "long", year: "numeric" }
+        );
+        const starsAria = `${stars} stars on GitHub`;
+        return hyperHTML`<div class="incubation"><dt>
+          <a href="${href}" class="spec">${name}</a><a href="${repo}">
+          <img src="images/gh32px.png" alt="GitHub repo" width="16" height="16">
+          </a>
+          </dt>
+            <dd class="description">
+            ${
+              description
+                ? hyperHTML`${description}`
+                : "No description available."
+            }
+            </dd>
+            <dd class="meta">
+              Incubating for <b><time datetime="${createdDateTime}">${incubationYearsAndMonths}</time></b>.
+              Last updated <b><time datetime="${updatedDateTime}">${prettyUpdateDate}</time></b> |
+              <span class="github-stars" aria-label="${starsAria}" title="${starsAria}">★ ${stars}</span>.
+            </dd>
+          </div>
+        `;
       }
 
-      function toListItem(entry) {
-        const { name, repo } = entry;
-        let { spec } = entry;
-        // derived from repo
-        if (!spec) {
-          const { pathname } = new URL(repo);
-          const path = pathname.substring(pathname.lastIndexOf("/") + 1);
-          spec = new URL(path, "https://wicg.github.io/");
+      function getYearsAndMonths(dateString) {
+        const inputDate = new Date(dateString);
+        const currentDate = new Date();
+
+        // Calculate the difference in months between the two dates
+        const diffMonths =
+          (currentDate.getFullYear() - inputDate.getFullYear()) * 12 +
+          (currentDate.getMonth() - inputDate.getMonth());
+
+        // Calculate the number of years and months from the difference in months
+        const years = Math.floor(diffMonths / 12);
+        const months = diffMonths % 12;
+
+        // Return the result as a string using a switch statement
+        switch (true) {
+          case years === 0 && months === 0:
+            return "less than a month";
+          case years === 0:
+            return `${months} month${months !== 1 ? "s" : ""}`;
+          case months === 0:
+            return `${years} year${years !== 1 ? "s" : ""}`;
+          default:
+            return `${years} year${years !== 1 ? "s" : ""} and ${months} month${
+              months !== 1 ? "s" : ""
+            }`;
         }
-        return hyperHTML`<li>
-        <a href="${spec}">
-          ${name}
-        </a>
-        <a href="${repo}">
-          <img src="images/gh32px.png" alt="GitHub repo" width="16" height="16">
-        </a>
-        </li>`;
       }
 
       window.onload = async () => {
