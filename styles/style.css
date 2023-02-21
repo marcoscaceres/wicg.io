@@ -39,6 +39,7 @@ header {
   font-size: 1em;
   background-color: #4e4e53;
   background-image: url("../images/code@1x.jpg");
+  transition: background-position 0.5s ease;
 }
 
 header:after {
@@ -89,6 +90,10 @@ p.about {
   font-size: 1em;
 }
 
+.generated {
+  font-weight: bold;
+}
+
 header img {
   background-color: #f7f5f1;
   padding: 0.3em;
@@ -125,6 +130,7 @@ p,
 
 /*has 3 columns in a grid*/
 .buttonlist {
+  --pill-bg-color: #2eb3c4;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   grid-gap: 0.5em;
@@ -140,11 +146,16 @@ p,
 
 .fancypill > li {
   line-height: 2.875em;
-  background-color: #2eb3c4;
+  background: var(--pill-bg-color);
 }
 
 .fancypill a {
   color: rgb(249, 245, 236);
+}
+
+.fancypill li:first-child,
+.fancypill li:last-child {
+  border-radius: 0.625em;
 }
 
 .fancypill li:first-child {
@@ -209,20 +220,12 @@ footer {
   color: rgb(200, 200, 200);
 }
 
-/* display the button list as
-three column grid. */
 ul {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));
   grid-gap: 1em;
-  padding: 0;
-  margin: 0;
   list-style-type: none;
-}
-
-ul {
   padding: 1em 2.2em;
-  list-style-type: none;
   line-height: 2.2em;
 }
 
@@ -240,13 +243,9 @@ img {
   grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));
   grid-gap: 1em;
   padding-left: 1em;
-  margin: 0;
-  list-style-type: none;
 }
 
-.linkslist a:link {
-  text-decoration: underline;
-}
+
 
 .docslist a.spec {
   font-weight: bold;
@@ -267,22 +266,8 @@ main {
   border: 0;
 }
 
-.accelerated {
-  overflow: hidden;
-  transition: height 0.7s;
-  will-change: auto;
-}
-
-section.collapsable {
-  overflow: hidden;
-  height: 2.35em;
-  will-change: auto;
-}
-
 dt,
 dd {
-  margin: 0;
-  padding: 0;
   padding-left: 1em;
 }
 
@@ -301,13 +286,13 @@ dd.description {
   line-height: 1.5em;
   padding-right: 0.5em;
 }
+
 span.github-stars {
   white-space: nowrap;
   display: inline-block;
 }
 
-p a:link {
-  color: #2eb3c4;
+p a:link, .linkslist a:link {
   text-decoration: underline;
 }
 
@@ -353,16 +338,15 @@ p a:link {
   }
 }
 
+.multicol {
+  display: grid;
+}
+
 @media (min-width: 36em) {
   section > h2 {
     font-size: 0.9em;
   }
-  section.collapsable {
-    height: auto;
-  }
   .multicol {
-    /* 2 columns with css grid */
-    display: grid;
     grid-template-columns: 1fr 1fr;
   }
   header {
@@ -372,8 +356,6 @@ p a:link {
 
 @media (min-width: 64em) {
   .multicol {
-    /* 3 columns with css grid */
-    display: grid;
     grid-template-columns: 1fr 1fr 1fr;
   }
   header {
