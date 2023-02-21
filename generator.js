@@ -43,6 +43,7 @@ const ignore_set = new Set([
   "repo_info_generator",
   "discourse-wicg-theme",
   "proposals",
+  "wicg.github.io",
 ]);
 
 (async () => {
