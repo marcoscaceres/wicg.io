@@ -41,7 +41,7 @@
         </p>
       </section>
       <section id="about">
-        <h2 class="opener">About the WICG</h2>
+        <h2>About the WICG</h2>
         <p class="about">
           The Web Incubator Community Group (WICG) is a community group of the
           <a href="https://www.w3.org/">World Wide Web Consortium (W3C)</a> that
@@ -52,16 +52,31 @@
         </p>
       </section>
       <section id="proposals">
-        <h2 class="opener">Making a proposal</h2>
+        <h2>Making a proposal</h2>
         <p>
           If you are interested in contributing a proposal to the WICG, please
           see our
           <a href="https://github.com/WICG/proposals">proposals repository</a>
-          on GitHub.
+          on GitHub. The usual steps for incubating a proposal in the WICG is as
+          follows:
         </p>
+        <ol>
+          <li>
+            <a href="https://github.com/WICG/proposals">Submit a proposal</a>
+            outlining your idea.
+          </li>
+          <li>Get feedback and improve your proposal.</li>
+          <li>Find collaborators and create a GitHub repository.</li>
+          <li>Work on your proposal and seek consensus from the community.</li>
+          <li>
+            Advocate for adoption of your proposal to the
+            <a href="https://www.w3.org/">W3C</a> or the
+            <a href="https://whatwg.org/">WHATWG</a> for standardization.
+          </li>
+        </ol>
       </section>
       <section id="incubations">
-        <h2 class="opener">Active Incubations</h2>
+        <h2>Active Incubations</h2>
         <p>
           There are <span class="incubation-count generated"></span> incubations
           actively being worked on by the WICG community. The
@@ -109,7 +124,7 @@
         <dl class="docslist multicol" id="archived-incubation-list"></dl>
       </section>
       <section id="resources">
-        <h2 class="opener">Useful Resources</h2>
+        <h2>Useful Resources</h2>
         <ul class="linkslist">
           <li>
             <a href="https://wicg.github.io/admin/charter.html"
@@ -502,7 +517,9 @@
 
       window.onload = async () => {
         const activeSpecs = fetch("./data/active.json").then((r) => r.json());
-        const archivedSpecs = fetch("./data/archived.json").then((r) => r.json());
+        const archivedSpecs = fetch("./data/archived.json").then((r) =>
+          r.json()
+        );
         const promiseToFillSpecs = fillSpecs(activeSpecs);
         const promiseToFillStats = fillStats(activeSpecs);
         const promiseToFillArchivedSpecs = fillArchivedSpecs(archivedSpecs);
