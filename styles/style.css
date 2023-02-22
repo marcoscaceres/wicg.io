@@ -292,7 +292,7 @@ span.github-stars {
   display: inline-block;
 }
 
-p a:link, .linkslist a:link {
+p a:link, .linkslist a:link, ol a:link {
   text-decoration: underline;
 }
 
