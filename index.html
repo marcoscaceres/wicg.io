@@ -65,9 +65,6 @@
         <p>
           There are <span class="incubation-count generated"></span> incubations
           actively being worked on by the WICG community. The
-          <a href="https://en.wikipedia.org/wiki/Mean">mean</a>
-          incubation time for these projects is
-          <span class="mean-duration generated"></span> and the
           <a href="https://en.wikipedia.org/wiki/Median">median</a> incubation
           time is <span class="median-duration generated"></span>. The longest
           running incubation is
@@ -84,6 +81,32 @@
           based on the community's interaction with issues and incoming commits.
         </p>
         <dl class="docslist multicol" id="incubation-list"></dl>
+      </section>
+      <section id="archived">
+        <h2>Archived incubations</h2>
+        <p>
+          The following
+          <span class="archived-count generated"></span> incubations have been
+          archived and are no longer actively being pursued by the WICG
+          community. This indicates that either they have successfully
+          progressed to the <a href="https://www.w3.org/">W3C</a> or the
+          <a href="https://whatwg.org/">WHATWG</a>, or they have been abandoned.
+        </p>
+        <p>
+          The
+          <a href="https://en.wikipedia.org/wiki/Median">median</a>
+          time for archived incubations is
+          <span class="median-archived-duration generated"></span>. The shortest
+          incubation before being archived was
+          <span class="shortest-archived-incubation-name generated"></span>,
+          which lasted for approximately
+          <span class="shortest-archived-incubation-duration generated"></span>.
+          The longest running incubation before being archived was
+          <a class="longest-archived-incubation-name generated"></a>, which
+          lasted for approximately
+          <span class="longest-archived-incubation-duration generated"></span>.
+        </p>
+        <dl class="docslist multicol" id="archived-incubation-list"></dl>
       </section>
       <section id="resources">
         <h2 class="opener">Useful Resources</h2>
@@ -161,6 +184,17 @@
     </aside>
     <script>
       "use strict";
+
+      async function fillArchivedSpecs(jsonPromise) {
+        const archivedIncubationList = hyperHTML.hyper(
+          document.getElementById("archived-incubation-list")
+        );
+        archivedIncubationList`${{
+          placeholder: "Loading archived specs...",
+          any: jsonPromise.then((specs) => specs.map(toArchivedListItem)),
+        }}`;
+      }
+
       async function fillSpecs(jsonPromise) {
         const incubationList = hyperHTML.hyper(
           document.getElementById("incubation-list")
@@ -171,11 +205,17 @@
         }}`;
       }
 
-      function calculateProjectDurationStats(incubations) {
+      function calculateProjectDurationStats(
+        incubations,
+        { usePushDate = false }
+      ) {
         const currentDate = new Date();
         const durations = incubations.map((incubation) => {
           const createdDateTime = new Date(incubation.created_at);
-          const durationInMs = currentDate - createdDateTime;
+          const fromDate = usePushDate
+            ? new Date(incubation.pushed_at)
+            : currentDate;
+          const durationInMs = fromDate - createdDateTime;
           const href = incubation.spec || incubation.repo;
 
           return {
@@ -185,9 +225,6 @@
             description: incubation.description,
           };
         });
-        const meanDurationInMs =
-          durations.reduce((total, duration) => total + duration.duration, 0) /
-          incubations.length;
 
         const medianDurationInMs = calculateMedian(
           durations.map((duration) => duration.duration)
@@ -199,10 +236,6 @@
           duration.duration < shortest.duration ? duration : shortest
         );
 
-        const meanDurationInDays = Math.floor(
-          meanDurationInMs / (1000 * 60 * 60 * 24)
-        );
-        const meanDuration = formatDuration(meanDurationInMs);
         const medianDuration = formatDuration(medianDurationInMs);
         const longestDurationFormatted = formatDuration(
           longestDuration.duration
@@ -211,7 +244,6 @@
           shortestDuration.duration
         );
         return {
-          meanDuration: meanDuration,
           medianDuration: medianDuration,
           longestDuration: {
             ...longestDuration,
@@ -243,6 +275,56 @@
           years: durationInYears,
           months: durationInMonths,
         });
+      }
+
+      function normalizeDescription(description) {
+        description = description?.trim();
+        if (
+          // If description does not end with a period or question mark, don't add one.
+          description &&
+          !description.endsWith(".") &&
+          !description.endsWith("?")
+        ) {
+          description += ".";
+        }
+        return description;
+      }
+
+      function toArchivedListItem(entry) {
+        const { name, repo, spec, stars } = entry;
+        /** @type {string} */
+        const description = normalizeDescription(entry.description);
+        const href = repo;
+        // Incubation time in years and months. We use pushed_at as Github API
+        // does not provide an archive date.
+        const incubationYearsAndMonths = toHumanReadableYearsAndMonths(
+          getYearsAndMonths(entry.created_at, entry.pushed_at)
+        );
+        // Update date suitable for the datetime attribute
+        const pushedAt = new Date(entry.pushed_at);
+        // Pretty date only showing the month and year
+        const prettyUpdateDate = pushedAt.toLocaleDateString("en-US", {
+          month: "long",
+          year: "numeric",
+        });
+        return hyperHTML`<div class="incubation"><dt>
+          <a href="${href}" class="spec">${name}</a><a href="${repo}">
+          <img src="images/gh32px.png" alt="GitHub repo" width="16" height="16">
+          </a>
+          </dt>
+            <dd class="description">
+            ${
+              description
+                ? hyperHTML`${description}`
+                : "No description available."
+            }
+            </dd>
+            <dd class="meta">
+              Incubated for <b>${incubationYearsAndMonths}</b>.
+              Work stopped approx. <b><time datetime="${pushedAt.toISOString()}">${prettyUpdateDate}</time></b>.
+            </dd>
+          </div>
+        `;
       }
 
       function toListItem(entry) {
@@ -293,14 +375,17 @@
         `;
       }
 
-      function getYearsAndMonths(dateString) {
+      function getYearsAndMonths(
+        dateString,
+        toDateString = new Date().toISOString()
+      ) {
         const inputDate = new Date(dateString);
-        const currentDate = new Date();
+        const toDate = new Date(toDateString);
 
         // Calculate the difference in months between the two dates
         const diffMonths =
-          (currentDate.getFullYear() - inputDate.getFullYear()) * 12 +
-          (currentDate.getMonth() - inputDate.getMonth());
+          (toDate.getFullYear() - inputDate.getFullYear()) * 12 +
+          (toDate.getMonth() - inputDate.getMonth());
 
         // Calculate the number of years and months from the difference in months
         const years = Math.floor(diffMonths / 12);
@@ -333,17 +418,10 @@
           any: jsonPromise.then((specs) => `${specs.length}`),
         }}`;
 
-        const {
-          meanDuration,
-          medianDuration,
-          longestDuration,
-          shortestDuration,
-        } = calculateProjectDurationStats(await jsonPromise);
-        // Mean
-        const meanDurationElement = hyperHTML.hyper(
-          document.querySelector(".mean-duration")
-        );
-        meanDurationElement`${meanDuration}`;
+        const { medianDuration, longestDuration, shortestDuration } =
+          calculateProjectDurationStats(await jsonPromise, {
+            usePushDate: false,
+          });
 
         // Median
         const medianDurationElement = hyperHTML.hyper(
@@ -380,20 +458,56 @@
         shortestDurationDurationElement`${shortestDuration.duration}`;
       }
 
-      function setupCollapsibles() {
-        const collapsibles = document.querySelectorAll(".opener");
-        for (const collapsible of collapsibles) {
-          collapsible.addEventListener("click", () => {
-            collapsible.parentElement.classList.toggle("collapsed");
+      async function fillArchiveStats(archivedSpecs) {
+        const archivedCount = hyperHTML.hyper(
+          document.querySelector(".archived-count")
+        );
+        archivedCount`${{
+          placeholder: "",
+          any: archivedSpecs.then((specs) => `${specs.length}`),
+        }}`;
+        const specs = await archivedSpecs;
+        const { medianDuration, longestDuration, shortestDuration } =
+          calculateProjectDurationStats(specs, {
+            usePushDate: true,
           });
-        }
+        const medianDurationElement = hyperHTML.hyper(
+          document.querySelector(".median-archived-duration")
+        );
+        medianDurationElement`${medianDuration}`;
+        // Longest incubation
+        const longestDurationNameElement = document.querySelector(
+          ".longest-archived-incubation-name"
+        );
+        hyperHTML.hyper(longestDurationNameElement)`${longestDuration.name}`;
+        const longestDurationDurationElement = document.querySelector(
+          ".longest-archived-incubation-duration"
+        );
+        hyperHTML.hyper(
+          longestDurationDurationElement
+        )`${longestDuration.duration}`;
+
+        // Shortest incubation
+        const shortestDurationNameElement = document.querySelector(
+          ".shortest-archived-incubation-name"
+        );
+        hyperHTML.hyper(shortestDurationNameElement)`${shortestDuration.name}`;
+        const shortestDurationDurationElement = document.querySelector(
+          ".shortest-archived-incubation-duration"
+        );
+        hyperHTML.hyper(
+          shortestDurationDurationElement
+        )`${shortestDuration.duration}`;
       }
 
       window.onload = async () => {
-        const jsonPromise = fetch("repos.json").then((r) => r.json());
-        const promiseToFillSpecs = fillSpecs(jsonPromise);
-        const promiseToFillStats = fillStats(jsonPromise);
-        setupCollapsibles();
+        const activeSpecs = fetch("./data/active.json").then((r) => r.json());
+        const archivedSpecs = fetch("./data/archived.json").then((r) => r.json());
+        const promiseToFillSpecs = fillSpecs(activeSpecs);
+        const promiseToFillStats = fillStats(activeSpecs);
+        const promiseToFillArchivedSpecs = fillArchivedSpecs(archivedSpecs);
+        const promiseToFillStatsForArchivedSpecs =
+          fillArchiveStats(archivedSpecs);
 
         if (!navigator.serviceWorker) {
           return;
@@ -428,7 +542,13 @@
           window.location.reload();
         });
 
-        await promiseToFillSpecs; // finally, just wait for the specs to show up
+        // Now wait for the content to get rendered
+        await Promise.all([
+          promiseToFillSpecs,
+          promiseToFillStats,
+          promiseToFillArchivedSpecs,
+          promiseToFillStatsForArchivedSpecs,
+        ]);
 
         function trackInstallation(sw) {
           sw.addEventListener("statechange", () => {

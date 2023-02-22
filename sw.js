@@ -20,6 +20,8 @@ async function cacheIsPopulated() {
     "./manifest.json",
     "./styles/fonts/nexa/Nexa_Bold.otf",
     "./styles/style.css",
+    "./data/active.json",
+    "./data/archived.json",
   ];
   const cache = await caches.open(SITE_CACHE);
   await cache.addAll(resources);

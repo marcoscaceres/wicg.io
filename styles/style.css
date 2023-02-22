@@ -342,6 +342,13 @@ p a:link, .linkslist a:link {
   display: grid;
 }
 
+#archived dt > a.spec::after {
+  content: " (ARCHIVED)";
+  color: rgb(140, 80, 80);
+  font-weight: 600;
+  margin-right: 0.5em;
+}
+
 @media (min-width: 36em) {
   section > h2 {
     font-size: 0.9em;

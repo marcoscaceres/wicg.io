@@ -60,6 +60,8 @@ const ignore_set = new Set([
       has_pages: repo?.has_pages ?? null,
       created_at: repo?.created_at ?? null,
       updated_at: repo?.updated_at ?? null,
+      // A proxy for last activity and when it was archived
+      pushed_at: repo?.pushed_at ?? null,
     };
     if (repo.archived) {
       archived.push(repo_object);
@@ -83,10 +85,19 @@ const ignore_set = new Set([
   active = active.sort((a, b) => {
     return b.score - a.score;
   });
+  // Sort by pushed_at Date
+  archived = archived.sort((a, b) => {
+    return new Date(b.pushed_at) - new Date(a.pushed_at);
+  });
   try {
     await fs.writeFile(
-      path.resolve(__dirname, "repos.json"),
-      JSON.stringify(active, null, 2),
+      path.resolve(__dirname, "./data/active.json"),
+      JSON.stringify(active),
+      "utf-8"
+    );
+    await fs.writeFile(
+      path.resolve(__dirname, "./data/archived.json"),
+      JSON.stringify(archived),
       "utf-8"
     );
   } catch (err) {
